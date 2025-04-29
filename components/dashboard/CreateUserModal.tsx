@@ -1,44 +1,40 @@
 import { useState } from "react";
 import Button from "../ui/Button";
-import UserSelector from "./UserSelector";
 import { X } from "lucide-react";
 
-interface CreateKeyModalProps {
+interface CreateUserModalProps {
   isOpen: boolean;
   isLoading: boolean;
-  isAdmin: boolean;
-  defaultUserId?: number | null;
   onClose: () => void;
-  onSubmit: (name: string, userId: number, expirationDate?: string) => void;
+  onSubmit: (
+    username: string,
+    email: string,
+    password: string,
+    isAdmin: boolean
+  ) => void;
 }
 
-export default function CreateKeyModal({
+export default function CreateUserModal({
   isOpen,
   isLoading,
-  isAdmin,
-  defaultUserId = null,
   onClose,
   onSubmit,
-}: CreateKeyModalProps) {
-  const [keyName, setKeyName] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(
-    defaultUserId
-  );
-  const [expirationDate, setExpirationDate] = useState("");
+}: CreateUserModalProps) {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUserId) {
-      onSubmit(keyName, selectedUserId, expirationDate || undefined);
-    }
+    onSubmit(username, email, password, isAdmin);
   };
 
   const resetForm = () => {
-    setKeyName("");
-    if (!defaultUserId) {
-      setSelectedUserId(null);
-    }
-    setExpirationDate("");
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setIsAdmin(false);
   };
 
   const handleClose = () => {
@@ -48,17 +44,12 @@ export default function CreateKeyModal({
 
   if (!isOpen) return null;
 
-  // Calculate minimum date (tomorrow)
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
-
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-800">
-            Create New API Key
+            Create New User
           </h2>
           <button
             onClick={handleClose}
@@ -71,51 +62,75 @@ export default function CreateKeyModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label
-              htmlFor="keyName"
+              htmlFor="username"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Key Name*
+              Username*
             </label>
             <input
-              id="keyName"
+              id="username"
               type="text"
-              value={keyName}
-              onChange={(e) => setKeyName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="e.g. Development API Key"
+              placeholder="johndoe"
             />
-            <p className="mt-1 text-sm text-gray-500">
-              Give your API key a descriptive name to identify its purpose.
-            </p>
           </div>
-
-          {/* User selector (only visible for admins) */}
-          {isAdmin && (
-            <UserSelector
-              selectedUserId={selectedUserId}
-              onSelectUser={setSelectedUserId}
-            />
-          )}
 
           <div>
             <label
-              htmlFor="expiration"
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Expiration Date (Optional)
+              Email*
             </label>
             <input
-              id="expiration"
-              type="date"
-              value={expirationDate}
-              onChange={(e) => setExpirationDate(e.target.value)}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              min={minDate}
+              placeholder="john.doe@example.com"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Password*
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="••••••••••••"
             />
             <p className="mt-1 text-sm text-gray-500">
-              If not set, the API key will never expire.
+              Password should be at least 8 characters
             </p>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="is-admin"
+              type="checkbox"
+              checked={isAdmin}
+              onChange={(e) => setIsAdmin(e.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="is-admin"
+              className="ml-2 block text-sm text-gray-700"
+            >
+              Administrator account
+            </label>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
@@ -129,9 +144,9 @@ export default function CreateKeyModal({
             <Button
               type="submit"
               isLoading={isLoading}
-              disabled={!keyName || !selectedUserId}
+              disabled={!username || !email || !password}
             >
-              Generate API Key
+              Create User
             </Button>
           </div>
         </form>

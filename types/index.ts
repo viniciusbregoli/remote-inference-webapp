@@ -7,11 +7,21 @@ export interface DetectionState {
 }
 
 export interface ApiKey {
-id: number;
-user_id: number;
-key: string;
-name: string;
-is_active: boolean;
-created_at: string;
-expires_at?: string;
+  id: number;
+  user_id: number;
+  key: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  is_admin: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }

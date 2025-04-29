@@ -1,12 +1,26 @@
-"use client";
-
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LogOut, Image, Key } from "lucide-react";
+import { Home, LogOut, Image, Key, Users } from "lucide-react";
 import { logout } from "../../services/auth";
+import { getCurrentUser } from "../../services/api";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const user = await getCurrentUser();
+        setIsAdmin(user.is_admin);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    checkAdmin();
+  }, []);
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -60,6 +74,21 @@ export default function Navigation() {
               <span>API Keys</span>
             </Link>
           </li>
+          {isAdmin && (
+            <li>
+              <Link
+                href="/dashboard/users"
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  isActive("/dashboard/users")
+                    ? "bg-indigo-800 text-white"
+                    : "text-indigo-100 hover:bg-indigo-800"
+                }`}
+              >
+                <Users className="mr-3 h-5 w-5" />
+                <span>Users</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
 

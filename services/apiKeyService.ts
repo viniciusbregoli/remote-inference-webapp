@@ -23,6 +23,47 @@ export async function getUserApiKeys() {
 }
 
 /**
+ * Get all API keys (admin only)
+ * @returns List of all API keys
+ */
+export async function getAllApiKeys() {
+  const headers = {
+    ...getAuthHeader(),
+  };
+
+  const response = await fetch(`${API_URL}/api-keys/`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch API keys");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get API keys for a specific user (admin only)
+ * @param userId User ID
+ * @returns List of API keys for the user
+ */
+export async function getUserApiKeysByUserId(userId: number) {
+  const headers = {
+    ...getAuthHeader(),
+  };
+
+  const response = await fetch(`${API_URL}/api-keys/user/${userId}`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch API keys");
+  }
+
+  return response.json();
+}
+
+/**
  * Create a new API key
  * @param userId ID of the user who owns this key
  * @param name Name/description for the key
