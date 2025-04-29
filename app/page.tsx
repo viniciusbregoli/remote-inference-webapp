@@ -1,93 +1,40 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { isLoggedIn } from "../services/auth";
-import { Camera, Lock, BarChart2 } from "lucide-react";
 import Button from "../components/ui/Button";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
 export default function LandingPage() {
   const router = useRouter();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isLoggedIn()) {
-      router.push("/detect");
-    }
-  }, [router]);
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100">
-      <div className="container mx-auto px-4 py-16">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 text-gray-800">
+      <div className="container mx-auto px-6 py-20">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            YOLO Object Detection API
+        <div className="text-center mb-24">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-6 leading-tight">
+            Remote Inference API
           </h1>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-8">
-            Powerful computer vision technology with a simple interface. Detect
-            objects in images with state-of-the-art accuracy.
+          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-10">
+            Effortlessly integrate powerful computer vision into your
+            applications. Detect objects in images with state-of-the-art
+            accuracy via a simple API.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               onClick={() => router.push("/login")}
-              className="px-8 py-3 text-lg"
+              className="px-8 py-3 text-lg font-semibold !bg-indigo-600 hover:!bg-indigo-700 transition duration-300 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center gap-2"
             >
-              Sign In
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/detect")}
-              className="px-8 py-3 text-lg"
-            >
-              Try Detection
+              Get Started <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <FeatureCard
-            icon={<Camera className="h-10 w-10 text-indigo-600" />}
-            title="Object Detection"
-            description="Detect multiple objects in images with high accuracy using YOLOv8 models."
-          />
-          <FeatureCard
-            icon={<Lock className="h-10 w-10 text-indigo-600" />}
-            title="Secure API"
-            description="Access the API securely with API keys and JWT authentication."
-          />
-          <FeatureCard
-            icon={<BarChart2 className="h-10 w-10 text-indigo-600" />}
-            title="Usage Analytics"
-            description="Monitor your API usage with detailed statistics and visualizations."
-          />
-        </div>
-
         {/* Footer */}
-        <footer className="text-center text-gray-600 mt-24">
-          <p>© 2025 YOLO Object Detection API. All rights reserved.</p>
+        <footer className="text-center text-gray-500 mt-32 border-t border-gray-200 pt-8">
+          <p>© 2025 Remote Inference API. All rights reserved.</p>
         </footer>
       </div>
     </main>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6 text-center">
-      <div className="flex justify-center mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
   );
 }
