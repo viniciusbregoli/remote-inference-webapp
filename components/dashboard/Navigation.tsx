@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LogOut, Image } from "lucide-react";
+import { Home, LogOut, Image, Key } from "lucide-react";
 import { logout } from "../../services/auth";
 
 export default function Navigation() {
@@ -45,6 +45,19 @@ export default function Navigation() {
             >
               <Image className="mr-3 h-5 w-5" />
               <span>Object Detection</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/api-keys"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActive("/dashboard/api-keys")
+                  ? "bg-indigo-800 text-white"
+                  : "text-indigo-100 hover:bg-indigo-800"
+              }`}
+            >
+              <Key className="mr-3 h-5 w-5" />
+              <span>API Keys</span>
             </Link>
           </li>
         </ul>
