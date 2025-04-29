@@ -8,8 +8,8 @@ export default function LandingPage() {
   const router = useRouter();
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 text-gray-800">
-      <div className="container mx-auto px-6 py-20">
+    <main className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 text-gray-800">
+      <div className="container mx-auto px-6 py-20 flex-grow flex flex-col justify-center">
         {/* Hero Section */}
         <div className="text-center mb-24">
           <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-6 leading-tight">
@@ -31,7 +31,7 @@ export default function LandingPage() {
         </div>
 
         {/* Footer */}
-        <footer className="text-center text-gray-500 mt-32 border-t border-gray-200 pt-8">
+        <footer className="text-center text-gray-500 mt-auto pt-8 border-t border-gray-200">
           <p>© 2025 Remote Inference API. All rights reserved.</p>
         </footer>
       </div>

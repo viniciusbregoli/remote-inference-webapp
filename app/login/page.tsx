@@ -2,9 +2,9 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
+import { LockClosedIcon } from "@heroicons/react/24/solid";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -51,66 +51,64 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800">Sign In</h1>
-          <p className="mt-2 text-gray-600">
+          <LockClosedIcon className="mx-auto h-12 w-auto text-indigo-600" />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
             Access your object detection dashboard
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="username" className="sr-only">
                 Username
               </label>
               <input
                 id="username"
                 name="username"
                 type="text"
+                autoComplete="username"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Username"
               />
             </div>
-
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
               />
             </div>
           </div>
 
           {error && <ErrorMessage message={error} />}
 
-          <Button type="submit" isLoading={isLoading} fullWidth={true}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            fullWidth={true}
+            className="px-8 py-3 text-lg font-semibold !bg-indigo-600 hover:!bg-indigo-700 transition duration-300 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+          >
             Sign in
           </Button>
-
-          <div className="text-center text-sm text-gray-600">
-            Don't have an account?{" "}
-            <span className="font-medium text-indigo-600 hover:text-indigo-500">
-              Contact administrator
-            </span>
-          </div>
         </form>
       </div>
     </div>
