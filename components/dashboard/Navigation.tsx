@@ -62,9 +62,9 @@ export default function Navigation() {
           </li>
           <li>
             <Link
-              href="/detect"
+              href="/dashboard/detect"
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                isActive("/detect")
+                isActive("/dashboard/detect")
                   ? "bg-indigo-800 text-white"
                   : "text-indigo-100 hover:bg-indigo-800"
               }`}
