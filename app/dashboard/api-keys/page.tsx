@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
-import { CheckCircle, XCircle, Copy, Plus } from "lucide-react";
+import { CheckCircle, Copy, Plus } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";
 import { getAuthHeader } from "../../../services/auth";
@@ -141,14 +141,17 @@ export default function APIKeysPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">API Keys</h1>
-          <p className="text-gray-600">
-            Manage your API keys for accessing the YOLO Detection API
-          </p>
-        </div>
+    <>
+      <div className="mb-10">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          API Keys
+        </h1>
+        <p className="text-lg text-gray-600 mt-1">
+          Manage your API keys for accessing the YOLO Detection API.
+        </p>
+      </div>
+
+      <div className="mb-6 flex justify-end">
         <Button
           onClick={() => setShowNewKeyForm(true)}
           className="flex items-center"
@@ -157,12 +160,17 @@ export default function APIKeysPage() {
           New API Key
         </Button>
       </div>
-
-      {error && <ErrorMessage message={error} className="mb-6" />}
+      {error && (
+        <div className="mb-6">
+          <ErrorMessage message={error} />
+        </div>
+      )}
 
       {showNewKeyForm && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Create New API Key</h2>
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Create New API Key
+          </h2>
           <form onSubmit={handleCreateKey} className="space-y-4">
             <div>
               <label
@@ -198,7 +206,7 @@ export default function APIKeysPage() {
       )}
 
       {newKeyData && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 md:p-8 mb-8">
           <div className="flex items-start">
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3" />
             <div>
@@ -206,8 +214,8 @@ export default function APIKeysPage() {
                 API Key Created Successfully
               </h3>
               <p className="text-green-700 mt-1 text-sm">
-                Make sure to copy your API key now. You won't be able to see it
-                again!
+                Make sure to copy your API key now. You won&apos;t be able to
+                see it again!
               </p>
               <div className="mt-3 p-3 bg-white rounded-md flex items-center justify-between">
                 <code className="text-sm font-mono break-all">
@@ -230,7 +238,10 @@ export default function APIKeysPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 overflow-hidden">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Your API Keys
+        </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -358,6 +369,6 @@ export default function APIKeysPage() {
           </table>
         </div>
       </div>
-    </div>
+    </>
   );
 }
