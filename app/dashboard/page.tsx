@@ -1,8 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BarChart2, User, Box, Clock } from "lucide-react";
+import {
+  BarChart2,
+  User,
+  Box,
+  Clock,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { getAuthHeader } from "../../services/auth";
+import Link from "next/link";
 
 interface UserStats {
   daily_usage: number;
@@ -50,64 +58,79 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-pulse text-gray-500">Loading statistics...</div>
+      <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+        <div className="flex items-center space-x-2 text-gray-500">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading dashboard...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-        <p className="font-medium">Error loading dashboard</p>
-        <p className="text-sm">{error}</p>
+      <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md flex items-center space-x-3">
+          <AlertCircle className="h-6 w-6" />
+          <div>
+            <p className="font-bold">Error loading dashboard</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">
-          Welcome to your YOLO Detection API dashboard
-        </p>
-      </div>
-
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Daily API Usage"
-            value={`${stats.daily_usage} / ${stats.daily_limit}`}
-            icon={<BarChart2 className="h-6 w-6 text-indigo-600" />}
-            percentage={stats.daily_percentage}
-          />
-          <StatCard
-            title="Monthly API Usage"
-            value={`${stats.monthly_usage} / ${stats.monthly_limit}`}
-            icon={<Clock className="h-6 w-6 text-indigo-600" />}
-            percentage={stats.monthly_percentage}
-          />
-          <StatCard
-            title="Objects Detected"
-            value="View analytics"
-            icon={<Box className="h-6 w-6 text-indigo-600" />}
-            linkTo="/dashboard/usage"
-          />
-          <StatCard
-            title="API Keys"
-            value="Manage keys"
-            icon={<User className="h-6 w-6 text-indigo-600" />}
-            linkTo="/dashboard/api-keys"
-          />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+            Dashboard
+          </h1>
+          <p className="text-lg text-gray-600 mt-1">
+            Welcome! Here&apos;s an overview of your API usage.
+          </p>
         </div>
-      )}
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <p className="text-gray-500">
-          View your recent API usage and activity in the Usage Statistics tab.
-        </p>
+        {stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <StatCard
+              title="Daily API Usage"
+              value={`${stats.daily_usage} / ${stats.daily_limit}`}
+              icon={<BarChart2 className="h-6 w-6 text-indigo-500" />}
+              percentage={stats.daily_percentage}
+            />
+            <StatCard
+              title="Monthly API Usage"
+              value={`${stats.monthly_usage} / ${stats.monthly_limit}`}
+              icon={<Clock className="h-6 w-6 text-teal-500" />}
+              percentage={stats.monthly_percentage}
+            />
+            <StatCard
+              title="Objects Detected"
+              value="View Analytics"
+              icon={<Box className="h-6 w-6 text-amber-500" />}
+              linkTo="/dashboard/usage"
+            />
+            <StatCard
+              title="API Keys"
+              value="Manage Keys"
+              icon={<User className="h-6 w-6 text-sky-500" />}
+              linkTo="/dashboard/api-keys"
+            />
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Recent Activity
+          </h2>
+          <p className="text-gray-600">
+            Track your API calls and analyze detection results in the Usage
+            Statistics section.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -122,39 +145,46 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, icon, percentage, linkTo }: StatCardProps) {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6 relative overflow-hidden">
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-xl font-semibold mt-1">{value}</p>
-          {percentage !== undefined && (
-            <div className="mt-3 w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${
-                  percentage > 80
-                    ? "bg-red-500"
-                    : percentage > 50
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
-                }`}
-                style={{ width: `${percentage}%` }}
-              ></div>
-            </div>
-          )}
+  const cardContent = (
+    <div className="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 h-full flex flex-col">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1 pr-4">
+          <p className="text-sm font-medium text-gray-500 truncate">{title}</p>
+          <p className="text-2xl font-semibold text-gray-800 mt-1 truncate">
+            {value}
+          </p>
         </div>
-        <div className="bg-indigo-50 p-3 rounded-lg">{icon}</div>
+        <div className="bg-gray-100 p-3 rounded-full flex-shrink-0">{icon}</div>
       </div>
-      {linkTo && (
-        <a
-          href={linkTo}
-          className="absolute inset-0 flex items-center justify-center bg-indigo-600 bg-opacity-0 opacity-0 hover:bg-opacity-10 hover:opacity-100 transition-all duration-300"
-        >
-          <span className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm">
-            View Details
-          </span>
-        </a>
+      {percentage !== undefined && (
+        <div className="mt-auto pt-2">
+          <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                percentage > 80
+                  ? "bg-red-500"
+                  : percentage > 50
+                  ? "bg-yellow-500"
+                  : "bg-green-500"
+              }`}
+              style={{ width: `${Math.max(0, Math.min(100, percentage))}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-500 mt-1 text-right">
+            {percentage.toFixed(0)}% Used
+          </p>
+        </div>
       )}
     </div>
   );
+
+  if (linkTo) {
+    return (
+      <Link href={linkTo} className="block h-full">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }
