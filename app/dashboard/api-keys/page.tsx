@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  getUserApiKeys,
+  getAllApiKeys,
   createApiKey,
   deactivateApiKey,
   activateApiKey,
   deleteApiKey,
-  getAllApiKeys,
 } from "../../../services/apiKeyService";
 import { getCurrentUser } from "../../../services/api";
 import { ApiKey } from "../../../types";
@@ -49,8 +48,8 @@ export default function ApiKeysPage() {
   const fetchApiKeys = async () => {
     setIsLoading(true);
     try {
-      // If admin, fetch all keys, otherwise fetch only user's keys
-      const keys = isAdmin ? await getAllApiKeys() : await getUserApiKeys();
+      // Always fetch all keys, regardless of admin status
+      const keys = await getAllApiKeys();
       setApiKeys(keys);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch API keys");
@@ -195,9 +194,7 @@ export default function ApiKeysPage() {
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex items-center mb-6">
           <Key className="h-5 w-5 text-indigo-600 mr-2" />
-          <h2 className="text-xl font-semibold text-gray-800">
-            {isAdmin ? "All API Keys" : "Your API Keys"}
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-800">All API Keys</h2>
         </div>
 
         {apiKeys.length === 0 ? (
