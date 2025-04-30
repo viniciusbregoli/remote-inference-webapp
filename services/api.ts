@@ -12,9 +12,15 @@ export async function detectObjects(image: File): Promise<Blob> {
   const formData = new FormData();
   formData.append("image", image);
 
+  // Get authentication headers
   const headers = {
     ...getAuthHeader(),
   };
+
+  // Remove Content-Type as it will be set automatically for FormData
+  if (headers["Content-Type"]) {
+    delete headers["Content-Type"];
+  }
 
   const response = await fetch(`${API_URL}/detect`, {
     method: "POST",
