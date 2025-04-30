@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ApiKey } from "../../types";
-import { ClipboardCopy, Check } from "lucide-react";
+import { ClipboardCopy, Check, User } from "lucide-react";
 
 interface ApiKeyItemProps {
   apiKey: ApiKey;
@@ -55,21 +55,16 @@ export default function ApiKeyItem({
         </span>
       </div>
 
+      {/* Add user information display */}
+      <div className="flex items-center text-sm text-gray-600 mb-2">
+        <User className="h-4 w-4 mr-1" />
+        <span>User: {apiKey.user_username || `ID: ${apiKey.user_id}`}</span>
+      </div>
+
       <div className="flex items-center mb-3 bg-gray-50 p-2 rounded border border-gray-200">
         <code className="flex-1 font-mono text-sm overflow-x-auto whitespace-nowrap">
           {maskedKey}
         </code>
-        <button
-          onClick={() => copyToClipboard(apiKey.key)}
-          className="ml-2 p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200"
-          title="Copy API key to clipboard"
-        >
-          {copySuccess ? (
-            <Check size={16} className="text-green-500" />
-          ) : (
-            <ClipboardCopy size={16} />
-          )}
-        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm mb-4">

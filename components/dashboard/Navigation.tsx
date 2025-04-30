@@ -102,14 +102,6 @@ export default function Navigation() {
         </nav>
 
         <div className="mt-auto pt-6 border-t border-indigo-800">
-          <Link
-            href="/"
-            className="flex items-center px-4 py-3 w-full text-left rounded-lg text-indigo-100 hover:bg-indigo-800 transition-colors mb-2"
-          >
-            <Home className="mr-3 h-5 w-5" />
-            <span>Home</span>
-          </Link>
-
           <button
             onClick={logout}
             className="flex items-center px-4 py-3 w-full text-left rounded-lg text-indigo-100 hover:bg-indigo-800 transition-colors"
