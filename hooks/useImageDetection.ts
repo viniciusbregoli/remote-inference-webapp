@@ -93,6 +93,13 @@ export function useImageDetection() {
   };
 
   const resetDetection = () => {
+    // Keep the selected image, but clear the result
+    if (resultImage && resultImage.startsWith("blob:")) {
+      URL.revokeObjectURL(resultImage);
+      setResultImage(null);
+    }
+    
+    // Optionally clear everything
     if (selectedImage) {
       setSelectedImage(null);
     }
@@ -100,11 +107,6 @@ export function useImageDetection() {
     if (preview && preview.startsWith("blob:")) {
       URL.revokeObjectURL(preview);
       setPreview(null);
-    }
-
-    if (resultImage && resultImage.startsWith("blob:")) {
-      URL.revokeObjectURL(resultImage);
-      setResultImage(null);
     }
 
     setError(null);

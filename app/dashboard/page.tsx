@@ -1,21 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Key } from "lucide-react";
+import { Key, Camera, Users } from "lucide-react";
 import { getCurrentUser } from "../../services/api";
 import Link from "next/link";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 
 export default function Dashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function checkAdminStatus() {
+    async function fetchUserData() {
       try {
         const user = await getCurrentUser();
         setIsAdmin(user.is_admin);
+        setUsername(user.username);
       } catch (err) {
         setError(
           err instanceof Error
@@ -27,7 +29,7 @@ export default function Dashboard() {
       }
     }
 
-    checkAdminStatus();
+    fetchUserData();
   }, []);
 
   if (isLoading) {
@@ -38,76 +40,101 @@ export default function Dashboard() {
     );
   }
 
-  // Regular users (non-admin) see a different dashboard
-  if (!isAdmin) {
+  // Admin dashboard (keep the original admin view)
+  if (isAdmin) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Welcome to the YOLO Object Detection API
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+            Admin Dashboard
           </h1>
-          <p className="text-gray-600 mb-6">
-            This platform is designed for administrators only. If you need to
-            use the API services, please use the API documentation or contact
-            your administrator for assistance.
+          <p className="text-lg text-gray-600 mt-1">
+            Welcome to your YOLO Detection API administration panel.
           </p>
-          <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-blue-700">
-              For API usage and documentation, please visit our{" "}
-              <Link href="/" className="font-medium underline">
-                homepage
-              </Link>
-              .
-            </p>
-          </div>
+        </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Link href="/dashboard/users">
+            <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
+              <div className="flex items-center mb-4">
+                <div className="bg-indigo-100 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-indigo-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800 ml-3">
+                  User Management
+                </h2>
+              </div>
+              <p className="text-gray-600">
+                Create, manage, and monitor user accounts.
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/api-keys">
+            <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
+              <div className="flex items-center mb-4">
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <Key className="h-6 w-6 text-purple-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800 ml-3">
+                  API Keys
+                </h2>
+              </div>
+              <p className="text-gray-600">
+                Manage API keys and access credentials.
+              </p>
+            </div>
+          </Link>
         </div>
       </div>
     );
   }
 
-  // Admin dashboard
+  // Regular user dashboard
   return (
     <div className="max-w-7xl mx-auto px-4">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-          Admin Dashboard
+          Welcome, {username}
         </h1>
         <p className="text-lg text-gray-600 mt-1">
-          Welcome to your YOLO Detection API administration panel.
+          YOLO Object Detection API Dashboard
         </p>
       </div>
 
       {error && <ErrorMessage message={error} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Link href="/dashboard/users">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
-            <div className="flex items-center mb-4">
-              <div className="bg-indigo-100 p-3 rounded-full">
-                <Users className="h-6 w-6 text-indigo-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-800 ml-3">
-                User Management
-              </h2>
-            </div>
-            <p className="text-gray-600">
-              Create, manage, and monitor user accounts.
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/api-keys">
+        <Link href="/dashboard/my-api-keys">
           <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
             <div className="flex items-center mb-4">
               <div className="bg-purple-100 p-3 rounded-full">
                 <Key className="h-6 w-6 text-purple-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-800 ml-3">
-                API Keys
+                My API Keys
               </h2>
             </div>
             <p className="text-gray-600">
-              Manage API keys and access credentials.
+              Manage your API keys for integrating with our services.
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/detect">
+          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
+            <div className="flex items-center mb-4">
+              <div className="bg-indigo-100 p-3 rounded-full">
+                <Camera className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800 ml-3">
+                Object Detection
+              </h2>
+            </div>
+            <p className="text-gray-600">
+              Upload images and detect objects using our YOLO model.
             </p>
           </div>
         </Link>

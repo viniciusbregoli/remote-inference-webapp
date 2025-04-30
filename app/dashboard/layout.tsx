@@ -14,7 +14,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -24,29 +24,38 @@ export default function DashboardLayout({
       return;
     }
 
-    // Check if user is admin
-    const checkAdmin = async () => {
+    // Check authentication and role
+    const checkAuth = async () => {
       try {
         const user = await getCurrentUser();
 
-        // For non-admin users, restrict access to admin-only pages
+        // Restrict access to admin-only pages for regular users
         if (!user.is_admin) {
-          // Allow access to regular dashboard page
-          if (pathname !== "/dashboard") {
+          const adminOnlyPaths = ["/dashboard/users", "/dashboard/api-keys"];
+
+          if (adminOnlyPaths.includes(pathname)) {
             router.push("/dashboard");
+          }
+        }
+
+        // Redirect admin users trying to access regular user pages
+        if (user.is_admin) {
+          if (pathname === "/dashboard/my-api-keys") {
+            router.push("/dashboard/api-keys");
           }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        router.push("/login");
       } finally {
-        setIsCheckingAdmin(false);
+        setIsCheckingAuth(false);
       }
     };
 
-    checkAdmin();
+    checkAuth();
   }, [router, pathname]);
 
-  if (!isMounted || isCheckingAdmin) {
+  if (!isMounted || isCheckingAuth) {
     return (
       <div className="flex h-screen bg-gray-50">
         <Navigation />
