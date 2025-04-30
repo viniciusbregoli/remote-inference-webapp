@@ -1,32 +1,55 @@
 "use client";
 
-import { FormEvent, useEffect } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import ImageUpload from "../../../components/image-detection/ImageUpload"; // Adjusted path
-import ResultsDisplay from "../../../components/image-detection/ResultsDisplay"; // Adjusted path
-import Button from "../../../components/ui/Button"; // Adjusted path
-import ErrorMessage from "../../../components/ui/ErrorMessage"; // Adjusted path
-import { useImageDetection } from "../../../hooks/useImageDetection"; // Adjusted path
-import { isLoggedIn } from "../../../services/auth"; // Adjusted path
+import ImageUpload from "../../../components/image-detection/ImageUpload";
+import ResultsDisplay from "../../../components/image-detection/ResultsDisplay";
+import Button from "../../../components/ui/Button";
+import ErrorMessage from "../../../components/ui/ErrorMessage";
+import { useImageDetection } from "../../../hooks/useImageDetection";
+import { isLoggedIn } from "../../../services/auth";
+import { getCurrentUser } from "../../../services/api";
 
 export default function DetectionPage() {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const {
     preview,
     resultImage,
-    isLoading,
+    isLoading: detectionLoading,
     error,
-    authError,
     handleImageChange,
     handleDetection,
   } = useImageDetection();
 
-  // Check authentication on component mount
+  // Check authentication and admin status on component mount
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push("/login");
-    }
+    const checkAuth = async () => {
+      if (!isLoggedIn()) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const user = await getCurrentUser();
+
+        // If not admin, redirect to dashboard
+        if (!user.is_admin) {
+          router.push("/dashboard");
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   const handleSubmit = (e: FormEvent) => {
@@ -34,18 +57,29 @@ export default function DetectionPage() {
     handleDetection();
   };
 
-  // If not logged in, show a simplified view
-  if (typeof window !== "undefined" && !isLoggedIn()) {
-    return <div>Redirecting to login...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[80vh]">
+        <div className="animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div>
+      </div>
+    );
   }
 
-  // Remove the gradient background and adjust padding/margins for dashboard integration
+  // If not admin, show an access denied message
+  if (!isAdmin) {
+    return (
+      <div className="p-8">
+        <ErrorMessage
+          title="Access Denied"
+          message="You need administrator privileges to access this page."
+        />
+      </div>
+    );
+  }
+
   return (
     <main className="py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Removed header as it's likely part of the shared layout */}
-        {/* <header className="flex justify-between items-center mb-12"> ... </header> */}
-
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
           Object Detection
         </h1>
@@ -59,14 +93,14 @@ export default function DetectionPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <ImageUpload
                 preview={preview}
-                isLoading={isLoading}
+                isLoading={detectionLoading}
                 onImageChange={handleImageChange}
               />
 
               <Button
                 type="submit"
-                disabled={!preview || isLoading}
-                isLoading={isLoading}
+                disabled={!preview || detectionLoading}
+                isLoading={detectionLoading}
                 fullWidth={true}
               >
                 Detect Objects
@@ -74,25 +108,13 @@ export default function DetectionPage() {
             </form>
 
             {error && <ErrorMessage message={error} />}
-
-            {/* Auth error handling might be redundant if layout handles it */}
-            {authError && (
-              <div className="mt-4 text-center">
-                <p className="text-gray-600 mb-3">
-                  You need to be logged in to use this feature.
-                </p>
-                <Link
-                  href="/login"
-                  className="text-indigo-600 font-medium hover:text-indigo-500"
-                >
-                  Sign in now
-                </Link>
-              </div>
-            )}
           </div>
 
           {/* Right Column: Results Display */}
-          <ResultsDisplay resultImage={resultImage} isLoading={isLoading} />
+          <ResultsDisplay
+            resultImage={resultImage}
+            isLoading={detectionLoading}
+          />
         </div>
       </div>
     </main>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LogOut, Image, Key, Users } from "lucide-react";
+import { Home, LogOut, Key, Users } from "lucide-react";
 import { logout } from "../../services/auth";
 import { getCurrentUser } from "../../services/api";
 
@@ -26,6 +26,37 @@ export default function Navigation() {
     return pathname === path;
   };
 
+  // If not admin, just show a basic navigation
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-indigo-900 text-white w-64 py-6 px-4 flex flex-col">
+        <div className="mb-10">
+          <h1 className="text-xl font-bold">YOLO Detection API</h1>
+          <p className="text-indigo-200 text-sm mt-1">User Dashboard</p>
+        </div>
+
+        <div className="mt-auto pt-6 border-t border-indigo-800">
+          <Link
+            href="/"
+            className="flex items-center px-4 py-3 w-full text-left rounded-lg text-indigo-100 hover:bg-indigo-800 transition-colors mb-2"
+          >
+            <Home className="mr-3 h-5 w-5" />
+            <span>Home</span>
+          </Link>
+
+          <button
+            onClick={logout}
+            className="flex items-center px-4 py-3 w-full text-left rounded-lg text-indigo-100 hover:bg-indigo-800 transition-colors"
+          >
+            <LogOut className="mr-3 h-5 w-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // For admin users, show the full navigation
   return (
     <div className="min-h-screen bg-indigo-900 text-white w-64 py-6 px-4 flex flex-col">
       <div className="mb-10">
@@ -50,19 +81,6 @@ export default function Navigation() {
           </li>
           <li>
             <Link
-              href="/dashboard/detect"
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                isActive("/dashboard/detect")
-                  ? "bg-indigo-800 text-white"
-                  : "text-indigo-100 hover:bg-indigo-800"
-              }`}
-            >
-              <Image className="mr-3 h-5 w-5" />
-              <span>Object Detection</span>
-            </Link>
-          </li>
-          <li>
-            <Link
               href="/dashboard/api-keys"
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive("/dashboard/api-keys")
@@ -74,21 +92,19 @@ export default function Navigation() {
               <span>API Keys</span>
             </Link>
           </li>
-          {isAdmin && (
-            <li>
-              <Link
-                href="/dashboard/users"
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                  isActive("/dashboard/users")
-                    ? "bg-indigo-800 text-white"
-                    : "text-indigo-100 hover:bg-indigo-800"
-                }`}
-              >
-                <Users className="mr-3 h-5 w-5" />
-                <span>Users</span>
-              </Link>
-            </li>
-          )}
+          <li>
+            <Link
+              href="/dashboard/users"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActive("/dashboard/users")
+                  ? "bg-indigo-800 text-white"
+                  : "text-indigo-100 hover:bg-indigo-800"
+              }`}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              <span>Users</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 
