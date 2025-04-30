@@ -54,15 +54,15 @@ export default function CreateKeyModal({
   const minDate = tomorrow.toISOString().split("T")[0];
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 backdrop-blur-sm bg-gray-800/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-fade-in">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-800">
             Create New API Key
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
+            className="text-gray-400 hover:text-gray-500 transition-colors focus:outline-none"
           >
             <X size={20} />
           </button>
@@ -122,7 +122,7 @@ export default function CreateKeyModal({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
             >
               Cancel
             </button>

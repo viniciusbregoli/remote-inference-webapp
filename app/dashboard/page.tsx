@@ -112,27 +112,6 @@ export default function Dashboard() {
           </div>
         </Link>
       </div>
-
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Administration Guide
-        </h2>
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-2">User Management</h3>
-            <p className="text-gray-600">
-              Create and manage user accounts. Control access permissions and
-              monitor user activity.
-            </p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-2">API Keys</h3>
-            <p className="text-gray-600">
-              Generate, revoke, and manage API keys for user authentication.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
