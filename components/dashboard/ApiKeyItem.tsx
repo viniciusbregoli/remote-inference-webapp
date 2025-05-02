@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { ApiKey } from "../../types";
-import { ClipboardCopy, Check, User } from "lucide-react";
+import { User } from "lucide-react";
 
 interface ApiKeyItemProps {
   apiKey: ApiKey;
@@ -15,14 +14,6 @@ export default function ApiKeyItem({
   onDelete,
   showFullKey = false,
 }: ApiKeyItemProps) {
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-  };
-
   // Format date to be more readable
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Never";

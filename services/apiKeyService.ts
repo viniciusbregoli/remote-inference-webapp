@@ -1,19 +1,13 @@
 import { getAuthHeader } from "./auth";
+import { getCurrentUser } from "./api";
 
 const API_URL = "http://localhost:5000";
 
-/**
- * Get all API keys for the current user
- * @returns List of API keys
- */
+
 export async function getUserApiKeys() {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
-  const response = await fetch(`${API_URL}/api-keys/me`, {
-    headers,
-  });
+  const response = await fetch(`${API_URL}/api-keys/me`, { headers });
 
   if (!response.ok) {
     throw new Error("Failed to fetch API keys");
@@ -22,18 +16,16 @@ export async function getUserApiKeys() {
   return response.json();
 }
 
-/**
- * Get all API keys (admin only)
- * @returns List of all API keys
- */
 export async function getAllApiKeys() {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
-  const response = await fetch(`${API_URL}/api-keys/`, {
-    headers,
-  });
+  // First check if the current user is an admin
+  const currentUser = await getCurrentUser();
+  if (!currentUser.is_admin) {
+    throw new Error("Access denied: Admin privileges required");
+  }
+
+  const response = await fetch(`${API_URL}/api-keys/`, { headers });
 
   if (!response.ok) {
     throw new Error("Failed to fetch API keys");
@@ -42,15 +34,8 @@ export async function getAllApiKeys() {
   return response.json();
 }
 
-/**
- * Get API keys for a specific user (admin only)
- * @param userId User ID
- * @returns List of API keys for the user
- */
 export async function getUserApiKeysByUserId(userId: number) {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
   const response = await fetch(`${API_URL}/api-keys/user/${userId}`, {
     headers,
@@ -63,18 +48,8 @@ export async function getUserApiKeysByUserId(userId: number) {
   return response.json();
 }
 
-/**
- * Create a new API key
- * @param userId ID of the user who owns this key
- * @param name Name/description for the key
- * @param expiresAt Optional expiration date
- * @returns The created API key
- */
 export async function createApiKey(userId: number, name: string, expiresAt?: string) {
-  const headers = {
-    ...getAuthHeader(),
-    "Content-Type": "application/json",
-  };
+  const headers = { ...getAuthHeader(), "Content-Type": "application/json" };
 
   const body = {
     user_id: userId,
@@ -96,15 +71,8 @@ export async function createApiKey(userId: number, name: string, expiresAt?: str
   return response.json();
 }
 
-/**
- * Deactivate an API key
- * @param keyId ID of the key to deactivate
- * @returns The updated API key
- */
 export async function deactivateApiKey(keyId: number) {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
   const response = await fetch(`${API_URL}/api-keys/${keyId}/deactivate`, {
     method: "PUT",
@@ -118,15 +86,8 @@ export async function deactivateApiKey(keyId: number) {
   return response.json();
 }
 
-/**
- * Activate an API key
- * @param keyId ID of the key to activate
- * @returns The updated API key
- */
 export async function activateApiKey(keyId: number) {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
   const response = await fetch(`${API_URL}/api-keys/${keyId}/activate`, {
     method: "PUT",
@@ -140,14 +101,8 @@ export async function activateApiKey(keyId: number) {
   return response.json();
 }
 
-/**
- * Delete an API key
- * @param keyId ID of the key to delete
- */
 export async function deleteApiKey(keyId: number) {
-  const headers = {
-    ...getAuthHeader(),
-  };
+  const headers = { ...getAuthHeader() };
 
   const response = await fetch(`${API_URL}/api-keys/${keyId}`, {
     method: "DELETE",

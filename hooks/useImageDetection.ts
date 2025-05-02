@@ -12,7 +12,7 @@ export function useImageDetection() {
 
   // Check if user is authenticated
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') { // Check if we're in the browser
       const loggedIn = isLoggedIn();
       if (!loggedIn) {
         setAuthError(true);
