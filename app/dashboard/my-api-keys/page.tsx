@@ -12,11 +12,11 @@ import { getCurrentUser } from "../../../services/api";
 import { ApiKey } from "../../../types";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";
-import ApiKeyItem from "../../../components/dashboard/ApiKeyItem";
 import NewKeyDisplay from "../../../components/dashboard/NewKeyDisplay";
 import CreateKeyModal from "../../../components/dashboard/CreateKeyModal";
 import ConfirmationDialog from "../../../components/ui/ConfirmationDialog";
-import { Key, Plus, AlertCircle } from "lucide-react";
+import { Key, Plus, AlertCircle, Trash2, Power, PowerOff } from "lucide-react";
+import { Tooltip } from "react-tooltip";
 
 export default function MyApiKeysPage() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -37,6 +37,7 @@ export default function MyApiKeysPage() {
     keyId: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isToggling, setIsToggling] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCurrentUser().then(() => {
@@ -47,7 +48,6 @@ export default function MyApiKeysPage() {
   const fetchApiKeys = async () => {
     setIsLoading(true);
     try {
-      // Fetch only the current user's API keys
       const keys = await getUserApiKeys();
       setApiKeys(keys);
     } catch (err) {
@@ -90,10 +90,8 @@ export default function MyApiKeysPage() {
         name: newKey.name,
       });
 
-      // Close modal
       setIsCreateModalOpen(false);
 
-      // Refresh the list
       fetchApiKeys();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create API key");
@@ -103,13 +101,13 @@ export default function MyApiKeysPage() {
   };
 
   const handleToggleActivation = async (key: ApiKey) => {
+    setIsToggling(key.id);
     try {
       if (key.is_active) {
         await deactivateApiKey(key.id);
       } else {
         await activateApiKey(key.id);
       }
-      // Refresh the list after toggling
       fetchApiKeys();
     } catch (err) {
       setError(
@@ -117,6 +115,8 @@ export default function MyApiKeysPage() {
           ? err.message
           : `Failed to ${key.is_active ? "deactivate" : "activate"} API key`
       );
+    } finally {
+      setIsToggling(null);
     }
   };
 
@@ -133,9 +133,7 @@ export default function MyApiKeysPage() {
     setIsDeleting(true);
     try {
       await deleteApiKey(deleteConfirmation.keyId);
-      // Refresh the list after deleting
       fetchApiKeys();
-      // Close the confirmation dialog
       setDeleteConfirmation({ isOpen: false, keyId: null });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete API key");
@@ -144,19 +142,29 @@ export default function MyApiKeysPage() {
     }
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Never";
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const maskKey = (key: string) => `••••••••••••••••••••••${key.slice(-8)}`;
+
   if (isLoading && apiKeys.length === 0) {
     return (
       <div className="p-8 flex justify-center items-center">
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-slate-200 h-10 w-10"></div>
+        <div className="animate-pulse flex space-x-4 w-full">
           <div className="flex-1 space-y-6 py-1">
-            <div className="h-2 bg-slate-200 rounded"></div>
+            <div className="h-10 bg-slate-200 rounded w-1/4"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="h-2 bg-slate-200 rounded col-span-2"></div>
-                <div className="h-2 bg-slate-200 rounded col-span-1"></div>
-              </div>
-              <div className="h-2 bg-slate-200 rounded"></div>
+              <div className="h-12 bg-slate-200 rounded"></div>
+              <div className="h-12 bg-slate-200 rounded"></div>
+              <div className="h-12 bg-slate-200 rounded"></div>
             </div>
           </div>
         </div>
@@ -179,7 +187,6 @@ export default function MyApiKeysPage() {
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Display new API key after creation */}
       {newKeyData && (
         <NewKeyDisplay
           apiKey={newKeyData.key}
@@ -188,24 +195,22 @@ export default function MyApiKeysPage() {
         />
       )}
 
-      {/* List existing API keys */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center mb-6">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="flex items-center p-6 border-b border-gray-200">
           <Key className="h-5 w-5 text-indigo-600 mr-2" />
           <h2 className="text-xl font-semibold text-gray-800">Your API Keys</h2>
         </div>
 
-        {apiKeys.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+        {apiKeys.length === 0 && !isLoading ? (
+          <div className="text-center py-12 px-6">
             <Key className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900">
-              No API keys
+              No API keys found
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               You haven&apos;t created any API keys yet. Create one to get
               started.
             </p>
-
             <div className="mt-6">
               <Button
                 onClick={() => setIsCreateModalOpen(true)}
@@ -216,20 +221,118 @@ export default function MyApiKeysPage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {apiKeys.map((key) => (
-              <ApiKeyItem
-                key={key.id}
-                apiKey={key}
-                onToggleActivation={handleToggleActivation}
-                onDelete={openDeleteConfirmation}
-              />
-            ))}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Key
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Expires
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Created
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {apiKeys.map((key) => (
+                  <tr key={key.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {key.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                      {maskKey(key.key)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          key.is_active
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {key.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(key.expires_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(key.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
+                      <button
+                        onClick={() => handleToggleActivation(key)}
+                        disabled={isToggling === key.id}
+                        className={`p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        data-tooltip-id={`tooltip-toggle-${key.id}`}
+                        data-tooltip-content={
+                          key.is_active ? "Deactivate Key" : "Activate Key"
+                        }
+                      >
+                        {isToggling === key.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                        ) : key.is_active ? (
+                          <PowerOff size={16} className="text-amber-600" />
+                        ) : (
+                          <Power size={16} className="text-green-600" />
+                        )}
+                      </button>
+                      <Tooltip id={`tooltip-toggle-${key.id}`} place="top" />
+
+                      <button
+                        onClick={() => openDeleteConfirmation(key.id)}
+                        disabled={isToggling === key.id}
+                        className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-tooltip-id={`tooltip-delete-${key.id}`}
+                        data-tooltip-content="Delete Key"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      <Tooltip id={`tooltip-delete-${key.id}`} place="top" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {isLoading && apiKeys.length > 0 && (
+              <div className="p-4 text-center text-sm text-gray-500">
+                Loading more keys...
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* How to use section */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex items-center mb-6">
           <AlertCircle className="h-5 w-5 text-amber-600 mr-2" />
@@ -257,7 +360,6 @@ curl -X POST http://localhost:5000/detect \\
         </div>
       </div>
 
-      {/* Create API Key Modal */}
       <CreateKeyModal
         isOpen={isCreateModalOpen}
         isLoading={isCreating}
@@ -267,7 +369,6 @@ curl -X POST http://localhost:5000/detect \\
         onSubmit={handleCreateKey}
       />
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={deleteConfirmation.isOpen}
         title="Delete API Key"
