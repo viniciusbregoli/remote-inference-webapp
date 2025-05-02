@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LogOut, Key, Users, Camera } from "lucide-react";
 import { logout } from "../../services/auth";
-import { getCurrentUser } from "../../services/api";
+import { getCurrentUser } from "../../services/userService";
 
 export default function Navigation() {
   const pathname = usePathname();

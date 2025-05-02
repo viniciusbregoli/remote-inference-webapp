@@ -8,7 +8,7 @@ import {
   toggleUserAdmin,
   deleteUser,
 } from "../../../services/userService";
-import { getCurrentUser } from "../../../services/api";
+import { getCurrentUser } from "../../../services/userService";
 import { User } from "../../../types";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";

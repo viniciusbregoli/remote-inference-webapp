@@ -8,7 +8,7 @@ import {
   activateApiKey,
   deleteApiKey,
 } from "../../../services/apiKeyService";
-import { getCurrentUser } from "../../../services/api";
+import { getCurrentUser } from "../../../services/userService";
 import { ApiKey } from "../../../types";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";

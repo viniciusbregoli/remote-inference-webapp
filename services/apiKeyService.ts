@@ -1,5 +1,5 @@
 import { getAuthHeader } from "./auth";
-import { getCurrentUser } from "./api";
+import { getCurrentUser } from "./userService";
 
 const API_URL = "http://localhost:5000";
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Key, Camera, Users } from "lucide-react";
-import { getCurrentUser } from "../../services/api";
+import { getCurrentUser } from "../../services/userService";
 import Link from "next/link";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 

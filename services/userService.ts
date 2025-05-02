@@ -15,6 +15,19 @@ export async function getAllUsers() {
   return response.json();
 }
 
+export async function getCurrentUser() {
+  const headers = { ...getAuthHeader() };
+
+  const response = await fetch(`${API_URL}/users/me`, { headers });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user information");
+  }
+
+  return response.json();
+}
+
+
 export async function createUser(
   username: string,
   email: string,

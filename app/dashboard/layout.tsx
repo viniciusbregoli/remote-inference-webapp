@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navigation from "../../components/dashboard/Navigation";
 import { isLoggedIn } from "../../services/auth";
-import { getCurrentUser } from "../../services/api";
+import { getCurrentUser } from "../../services/userService";
 
 export default function DashboardLayout({
   children,

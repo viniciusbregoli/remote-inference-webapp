@@ -73,20 +73,6 @@ export default function DetectionPage() {
           </form>
 
           {error && <ErrorMessage message={error} />}
-
-          {!error && !preview && (
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mt-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    Our object detection model can identify a wide range of
-                    objects including people, vehicles, animals, and everyday
-                    items.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right Column: Results Display */}
