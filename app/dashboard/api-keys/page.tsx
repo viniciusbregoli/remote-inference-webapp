@@ -28,7 +28,6 @@ export default function ApiKeysPage() {
     key: string;
     name: string;
   } | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
@@ -61,7 +60,6 @@ export default function ApiKeysPage() {
   const fetchCurrentUser = async () => {
     try {
       const user = await getCurrentUser();
-      setUserId(user.id);
       setIsAdmin(user.is_admin);
       return user;
     } catch (err) {
@@ -94,12 +92,13 @@ export default function ApiKeysPage() {
         name: newKey.name,
       });
 
-      setIsCreateModalOpen(false);
       fetchApiKeys();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create API key");
     } finally {
+      // Always close modal and stop loading state
       setIsCreating(false);
+      setIsCreateModalOpen(false);
     }
   };
 
@@ -268,7 +267,7 @@ export default function ApiKeysPage() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]"
                   >
                     Actions
                   </th>
@@ -277,8 +276,16 @@ export default function ApiKeysPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {apiKeys.map((key) => (
                   <tr key={key.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {key.name}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span
+                        className={`${
+                          !key.is_active
+                            ? "line-through text-gray-500"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {key.name}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {key.user_username || `ID: ${key.user_id}`}
@@ -303,36 +310,38 @@ export default function ApiKeysPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(key.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
-                      <button
-                        onClick={() => handleToggleActivation(key)}
-                        disabled={isToggling === key.id}
-                        className={`p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed`}
-                        data-tooltip-id={`tooltip-toggle-${key.id}`}
-                        data-tooltip-content={
-                          key.is_active ? "Deactivate Key" : "Activate Key"
-                        }
-                      >
-                        {isToggling === key.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                        ) : key.is_active ? (
-                          <PowerOff size={16} className="text-amber-600" />
-                        ) : (
-                          <Power size={16} className="text-green-600" />
-                        )}
-                      </button>
-                      <Tooltip id={`tooltip-toggle-${key.id}`} place="top" />
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center min-w-[80px]">
+                        <button
+                          onClick={() => handleToggleActivation(key)}
+                          disabled={isToggling === key.id}
+                          className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-tooltip-id={`tooltip-toggle-${key.id}`}
+                          data-tooltip-content={
+                            key.is_active ? "Deactivate Key" : "Activate Key"
+                          }
+                        >
+                          {isToggling === key.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                          ) : key.is_active ? (
+                            <PowerOff size={16} className="text-amber-600" />
+                          ) : (
+                            <Power size={16} className="text-green-600" />
+                          )}
+                        </button>
+                        <Tooltip id={`tooltip-toggle-${key.id}`} place="top" />
 
-                      <button
-                        onClick={() => openDeleteConfirmation(key.id)}
-                        disabled={isToggling === key.id}
-                        className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-tooltip-id={`tooltip-delete-${key.id}`}
-                        data-tooltip-content="Delete Key"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                      <Tooltip id={`tooltip-delete-${key.id}`} place="top" />
+                        <button
+                          onClick={() => openDeleteConfirmation(key.id)}
+                          disabled={isToggling === key.id}
+                          className="w-8 h-8 ml-1 flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-tooltip-id={`tooltip-delete-${key.id}`}
+                          data-tooltip-content="Delete Key"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <Tooltip id={`tooltip-delete-${key.id}`} place="top" />
+                      </div>
                     </td>
                   </tr>
                 ))}

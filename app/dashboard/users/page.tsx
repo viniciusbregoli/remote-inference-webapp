@@ -48,7 +48,7 @@ export default function UsersPage() {
   useEffect(() => {
     fetchCurrentUser().then((user) => {
       if (user?.is_admin) {
-    fetchUsers();
+        fetchUsers();
       } else {
         setIsLoading(false);
       }
@@ -96,12 +96,13 @@ export default function UsersPage() {
 
     try {
       await createUser(username, email, password, isAdminRole);
-      setIsCreateModalOpen(false);
       fetchUsers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
+      // Always close modal and stop loading state
       setIsCreating(false);
+      setIsCreateModalOpen(false);
     }
   };
 
@@ -293,7 +294,7 @@ export default function UsersPage() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[140px]"
                   >
                     Actions
                   </th>
@@ -307,10 +308,16 @@ export default function UsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <UserCircle className="h-5 w-5 text-gray-400 mr-2" />
-                          <div className="text-sm font-medium text-gray-900">
+                          <div
+                            className={`text-sm font-medium ${
+                              !user.is_active
+                                ? "line-through text-gray-500"
+                                : "text-gray-900"
+                            }`}
+                          >
                             {user.username}
                             {isSelf && (
-                              <span className="ml-2 text-xs text-blue-600 font-normal">
+                              <span className="ml-2 text-xs text-blue-600 font-normal no-underline">
                                 (You)
                               </span>
                             )}
@@ -353,76 +360,80 @@ export default function UsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(user.updated_at)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-1 flex items-center">
-                        <button
-                          onClick={() => handleToggleActive(user)}
-                          disabled={
-                            isSelf ||
-                            isTogglingActive === user.id ||
-                            isTogglingAdmin === user.id
-                          }
-                          className={`p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed`}
-                          data-tooltip-id={`tooltip-active-${user.id}`}
-                          data-tooltip-content={
-                            user.is_active ? "Deactivate User" : "Activate User"
-                          }
-                          data-tooltip-place="top"
-                        >
-                          {isTogglingActive === user.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                          ) : user.is_active ? (
-                            <PowerOff size={16} className="text-amber-600" />
-                          ) : (
-                            <Power size={16} className="text-green-600" />
-                          )}
-                        </button>
-                        <Tooltip id={`tooltip-active-${user.id}`} />
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center min-w-[120px]">
+                          <button
+                            onClick={() => handleToggleActive(user)}
+                            disabled={
+                              isSelf ||
+                              isTogglingActive === user.id ||
+                              isTogglingAdmin === user.id
+                            }
+                            className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            data-tooltip-id={`tooltip-active-${user.id}`}
+                            data-tooltip-content={
+                              user.is_active
+                                ? "Deactivate User"
+                                : "Activate User"
+                            }
+                            data-tooltip-place="top"
+                          >
+                            {isTogglingActive === user.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                            ) : user.is_active ? (
+                              <PowerOff size={16} className="text-amber-600" />
+                            ) : (
+                              <Power size={16} className="text-green-600" />
+                            )}
+                          </button>
+                          <Tooltip id={`tooltip-active-${user.id}`} />
 
-                        <button
-                          onClick={() => handleToggleAdmin(user)}
-                          disabled={
-                            isSelf ||
-                            isTogglingAdmin === user.id ||
-                            isTogglingActive === user.id
-                          }
-                          className={`p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed`}
-                          data-tooltip-id={`tooltip-admin-${user.id}`}
-                          data-tooltip-content={
-                            user.is_admin
-                              ? "Remove Admin Privileges"
-                              : "Make Admin"
-                          }
-                          data-tooltip-place="top"
-                        >
-                          {isTogglingAdmin === user.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                          ) : user.is_admin ? (
-                            <ShieldCheck
-                              size={16}
-                              className="text-purple-600"
-                            />
-                          ) : (
-                            <Shield size={16} className="text-indigo-600" />
-                          )}
-                        </button>
-                        <Tooltip id={`tooltip-admin-${user.id}`} />
+                          <button
+                            onClick={() => handleToggleAdmin(user)}
+                            disabled={
+                              isSelf ||
+                              isTogglingAdmin === user.id ||
+                              isTogglingActive === user.id
+                            }
+                            className="w-8 h-8 ml-1 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            data-tooltip-id={`tooltip-admin-${user.id}`}
+                            data-tooltip-content={
+                              user.is_admin
+                                ? "Remove Admin Privileges"
+                                : "Make Admin"
+                            }
+                            data-tooltip-place="top"
+                          >
+                            {isTogglingAdmin === user.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                            ) : user.is_admin ? (
+                              <ShieldCheck
+                                size={16}
+                                className="text-purple-600"
+                              />
+                            ) : (
+                              <Shield size={16} className="text-indigo-600" />
+                            )}
+                          </button>
+                          <Tooltip id={`tooltip-admin-${user.id}`} />
 
-                        <button
-                          onClick={() => openDeleteConfirmation(user.id)}
-                          disabled={
-                            isSelf ||
-                            isDeleting ||
-                            isTogglingActive === user.id ||
-                            isTogglingAdmin === user.id
-                          }
-                          className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                          data-tooltip-id={`tooltip-delete-${user.id}`}
-                          data-tooltip-content="Delete User"
-                          data-tooltip-place="top"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        <Tooltip id={`tooltip-delete-${user.id}`} />
+                          <button
+                            onClick={() => openDeleteConfirmation(user.id)}
+                            disabled={
+                              isSelf ||
+                              isDeleting ||
+                              isTogglingActive === user.id ||
+                              isTogglingAdmin === user.id
+                            }
+                            className="w-8 h-8 ml-1 flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            data-tooltip-id={`tooltip-delete-${user.id}`}
+                            data-tooltip-content="Delete User"
+                            data-tooltip-place="top"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <Tooltip id={`tooltip-delete-${user.id}`} />
+                        </div>
                       </td>
                     </tr>
                   );

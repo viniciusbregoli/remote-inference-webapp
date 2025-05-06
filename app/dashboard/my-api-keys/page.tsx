@@ -15,7 +15,7 @@ import ErrorMessage from "../../../components/ui/ErrorMessage";
 import NewKeyDisplay from "../../../components/dashboard/NewKeyDisplay";
 import CreateKeyModal from "../../../components/dashboard/CreateKeyModal";
 import ConfirmationDialog from "../../../components/ui/ConfirmationDialog";
-import { Key, Plus, AlertCircle, Trash2, Power, PowerOff } from "lucide-react";
+import { Key, Plus, Trash2, Power, PowerOff } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 
 export default function MyApiKeysPage() {
@@ -90,13 +90,13 @@ export default function MyApiKeysPage() {
         name: newKey.name,
       });
 
-      setIsCreateModalOpen(false);
-
       fetchApiKeys();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create API key");
     } finally {
+      // Always close modal and stop loading state
       setIsCreating(false);
+      setIsCreateModalOpen(false);
     }
   };
 
@@ -184,9 +184,7 @@ export default function MyApiKeysPage() {
           <Plus size={18} className="mr-1" /> Create New Key
         </Button>
       </div>
-
       {error && <ErrorMessage message={error} />}
-
       {newKeyData && (
         <NewKeyDisplay
           apiKey={newKeyData.key}
@@ -194,7 +192,6 @@ export default function MyApiKeysPage() {
           onDismiss={() => setNewKeyData(null)}
         />
       )}
-
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="flex items-center p-6 border-b border-gray-200">
           <Key className="h-5 w-5 text-indigo-600 mr-2" />
@@ -257,7 +254,7 @@ export default function MyApiKeysPage() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]"
                   >
                     Actions
                   </th>
@@ -266,8 +263,16 @@ export default function MyApiKeysPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {apiKeys.map((key) => (
                   <tr key={key.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {key.name}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span
+                        className={`${
+                          !key.is_active
+                            ? "line-through text-gray-500"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {key.name}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                       {maskKey(key.key)}
@@ -289,36 +294,38 @@ export default function MyApiKeysPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(key.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
-                      <button
-                        onClick={() => handleToggleActivation(key)}
-                        disabled={isToggling === key.id}
-                        className={`p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed`}
-                        data-tooltip-id={`tooltip-toggle-${key.id}`}
-                        data-tooltip-content={
-                          key.is_active ? "Deactivate Key" : "Activate Key"
-                        }
-                      >
-                        {isToggling === key.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                        ) : key.is_active ? (
-                          <PowerOff size={16} className="text-amber-600" />
-                        ) : (
-                          <Power size={16} className="text-green-600" />
-                        )}
-                      </button>
-                      <Tooltip id={`tooltip-toggle-${key.id}`} place="top" />
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center min-w-[80px]">
+                        <button
+                          onClick={() => handleToggleActivation(key)}
+                          disabled={isToggling === key.id}
+                          className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-tooltip-id={`tooltip-toggle-${key.id}`}
+                          data-tooltip-content={
+                            key.is_active ? "Deactivate Key" : "Activate Key"
+                          }
+                        >
+                          {isToggling === key.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                          ) : key.is_active ? (
+                            <PowerOff size={16} className="text-amber-600" />
+                          ) : (
+                            <Power size={16} className="text-green-600" />
+                          )}
+                        </button>
+                        <Tooltip id={`tooltip-toggle-${key.id}`} place="top" />
 
-                      <button
-                        onClick={() => openDeleteConfirmation(key.id)}
-                        disabled={isToggling === key.id}
-                        className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-tooltip-id={`tooltip-delete-${key.id}`}
-                        data-tooltip-content="Delete Key"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                      <Tooltip id={`tooltip-delete-${key.id}`} place="top" />
+                        <button
+                          onClick={() => openDeleteConfirmation(key.id)}
+                          disabled={isToggling === key.id}
+                          className="w-8 h-8 ml-1 flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-tooltip-id={`tooltip-delete-${key.id}`}
+                          data-tooltip-content="Delete Key"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <Tooltip id={`tooltip-delete-${key.id}`} place="top" />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -332,34 +339,6 @@ export default function MyApiKeysPage() {
           </div>
         )}
       </div>
-
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center mb-6">
-          <AlertCircle className="h-5 w-5 text-amber-600 mr-2" />
-          <h2 className="text-xl font-semibold text-gray-800">
-            How to Use Your API Key
-          </h2>
-        </div>
-
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            To use the YOLO Object Detection API, include your API key in the
-            request header:
-          </p>
-
-          <div className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto">
-            <pre className="text-sm">
-              <code>
-                {`# Example cURL request
-curl -X POST http://localhost:5000/detect \\
-  -H "X-API-Key: your_api_key_here" \\
-  -F "image=@path/to/your/image.jpg"`}
-              </code>
-            </pre>
-          </div>
-        </div>
-      </div>
-
       <CreateKeyModal
         isOpen={isCreateModalOpen}
         isLoading={isCreating}
@@ -368,7 +347,6 @@ curl -X POST http://localhost:5000/detect \\
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateKey}
       />
-
       <ConfirmationDialog
         isOpen={deleteConfirmation.isOpen}
         title="Delete API Key"

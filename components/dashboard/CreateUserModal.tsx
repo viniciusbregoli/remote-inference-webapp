@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../ui/Button";
 import { X } from "lucide-react";
 
@@ -25,16 +25,87 @@ export default function CreateUserModal({
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(username, email, password, isAdmin);
-  };
+  // Add validation state
+  const [errors, setErrors] = useState<{
+    username?: string;
+    email?: string;
+    password?: string;
+  }>({});
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Reset form when modal is opened or closed
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset when closing
+      resetForm();
+    } else {
+      // Reset when opening
+      resetForm();
+    }
+  }, [isOpen]);
+
+  // Form validation
+  const validateForm = useCallback(() => {
+    const newErrors: {
+      username?: string;
+      email?: string;
+      password?: string;
+    } = {};
+
+    // Username validation
+    if (!username) {
+      newErrors.username = "Username is required";
+    } else if (username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      newErrors.username =
+        "Username can only contain letters, numbers, and underscores";
+    }
+
+    // Email validation
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      newErrors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+    }
+
+    setErrors(newErrors);
+    setIsFormValid(Object.keys(newErrors).length === 0);
+  }, [username, email, password, setErrors, setIsFormValid]);
+
+  // Validate form whenever inputs change
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
 
   const resetForm = () => {
     setUsername("");
     setEmail("");
     setPassword("");
     setIsAdmin(false);
+    setErrors({});
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate form again before submitting
+    validateForm();
+
+    if (isFormValid) {
+      onSubmit(username, email, password, isAdmin);
+      // Don't reset the form here - let the parent component control the modal
+    }
   };
 
   const handleClose = () => {
@@ -73,9 +144,14 @@ export default function CreateUserModal({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className={`w-full px-3 py-2 border ${
+                errors.username ? "border-red-500" : "border-gray-300"
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
               placeholder="johndoe"
             />
+            {errors.username && (
+              <p className="mt-1 text-sm text-red-600">{errors.username}</p>
+            )}
           </div>
 
           <div>
@@ -91,9 +167,14 @@ export default function CreateUserModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className={`w-full px-3 py-2 border ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
               placeholder="john.doe@example.com"
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -109,12 +190,19 @@ export default function CreateUserModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className={`w-full px-3 py-2 border ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
               placeholder="••••••••••••"
             />
-            <p className="mt-1 text-sm text-gray-500">
-              Password should be at least 8 characters
-            </p>
+            {errors.password ? (
+              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+            ) : (
+              <p className="mt-1 text-sm text-gray-500">
+                Password should be at least 8 characters with uppercase,
+                lowercase and numbers
+              </p>
+            )}
           </div>
 
           <div className="flex items-center">
@@ -144,7 +232,7 @@ export default function CreateUserModal({
             <Button
               type="submit"
               isLoading={isLoading}
-              disabled={!username || !email || !password}
+              disabled={!isFormValid || isLoading}
             >
               Create User
             </Button>
