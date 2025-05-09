@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import { LockClosedIcon } from "@heroicons/react/24/solid";
+import { login } from "../../services/auth";
+import { LoginCredentials } from "@/types";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -19,29 +21,12 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const formData = new URLSearchParams();
-      formData.append("username", username);
-      formData.append("password", password);
+      const credentials: LoginCredentials = {
+        username,
+        password,
+      };
 
-      const response = await fetch("http://localhost:5000/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Login failed");
-      }
-
-      const data = await response.json();
-
-      // Store token in localStorage
-      localStorage.setItem("accessToken", data.access_token);
-
-      // Redirect to dashboard
+      await login(credentials);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

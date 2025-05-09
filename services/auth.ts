@@ -1,27 +1,50 @@
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
+import { LoginCredentials } from "../types";
 
-  return localStorage.getItem('accessToken');
+export async function login(credentials: LoginCredentials) {
+  const formData = new URLSearchParams();
+  formData.append("username", credentials.username);
+  formData.append("password", credentials.password);
+
+  const response = await fetch(`http://localhost:5000/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Login failed");
+  }
+
+  const data = await response.json();
+  localStorage.setItem("accessToken", data.access_token);
+}
+
+export function logout(): void {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("accessToken");
+  window.location.href = "/login";
 }
 
 export function isLoggedIn(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
 
   try {
     const token = getToken();
     return !!token; // Return true if token exists and is not null/undefined/empty
   } catch (error) {
-    console.error('Error checking authentication status:', error);
+    console.error("Error checking authentication status:", error);
     return false;
   }
 }
 
-export function logout(): void {
-  if (typeof window === 'undefined') return;
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
 
-  localStorage.removeItem('accessToken');
-  // Redirect to login page
-  window.location.href = '/login';
+  return localStorage.getItem("accessToken");
 }
 
 export function getAuthHeader(): Record<string, string> {
@@ -32,6 +55,6 @@ export function getAuthHeader(): Record<string, string> {
   }
 
   return {
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
 }
