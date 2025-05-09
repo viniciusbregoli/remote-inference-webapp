@@ -331,11 +331,6 @@ export default function MyApiKeysPage() {
                 ))}
               </tbody>
             </table>
-            {isLoading && apiKeys.length > 0 && (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Loading more keys...
-              </div>
-            )}
           </div>
         )}
       </div>
