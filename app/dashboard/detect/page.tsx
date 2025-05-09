@@ -40,9 +40,16 @@ export default function DetectionPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+      {/* Error Message at the top - visible at all times */}
+      {error && (
+        <div className="mb-6">
+          <ErrorMessage message={error} />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
         {/* Left Column: Upload Form */}
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 h-full flex flex-col">
           <div className="flex items-center mb-2">
             <Camera className="h-5 w-5 text-indigo-600 mr-2" />
             <h2 className="text-xl font-semibold text-gray-700">
@@ -52,27 +59,29 @@ export default function DetectionPage() {
 
           <p className="text-gray-500 text-sm mb-4">
             Upload an image and our AI will detect and label objects within it.
-            Supported formats: JPEG, PNG, WebP.
+            Supported formats: JPEG, PNG, WebP. Max size: 10MB.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <ImageUpload
-              preview={preview}
-              isLoading={detectionLoading}
-              onImageChange={handleImageChange}
-            />
+          <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
+            <div className="flex-grow">
+              <ImageUpload
+                preview={preview}
+                isLoading={detectionLoading}
+                onImageChange={handleImageChange}
+              />
+            </div>
 
-            <Button
-              type="submit"
-              disabled={!preview || detectionLoading}
-              isLoading={detectionLoading}
-              fullWidth={true}
-            >
-              Detect Objects
-            </Button>
+            <div className="mt-6">
+              <Button
+                type="submit"
+                disabled={!preview || detectionLoading}
+                isLoading={detectionLoading}
+                fullWidth={true}
+              >
+                Detect Objects
+              </Button>
+            </div>
           </form>
-
-          {error && <ErrorMessage message={error} />}
         </div>
 
         {/* Right Column: Results Display */}

@@ -49,6 +49,20 @@ export function useImageDetection() {
         URL.revokeObjectURL(preview);
       }
 
+      // File size validation (10MB limit)
+      const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSizeInBytes) {
+        setError("File size exceeds 10MB limit. Please select a smaller image.");
+        return;
+      }
+
+      // File type validation
+      const supportedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+      if (!supportedTypes.includes(file.type)) {
+        setError("Unsupported file type. Please select a PNG, JPG, or WEBP image.");
+        return;
+      }
+
       setSelectedImage(file);
       setResultImage(null);
       setError(null);

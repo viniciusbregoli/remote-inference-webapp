@@ -12,12 +12,12 @@ export default function ResultsDisplay({
   isLoading,
 }: ResultsDisplayProps) {
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 top-8">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+    <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 h-full flex flex-col">
+      <h2 className="text-xl font-semibold text-gray-700 mb-4">
         Detection Result
       </h2>
       <div
-        className={`relative w-full h-80 sm:h-96 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center ${
+        className={`relative w-full flex-grow border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center ${
           resultImage ? "bg-white" : ""
         }`}
       >
