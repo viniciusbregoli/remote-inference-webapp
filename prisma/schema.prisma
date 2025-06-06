@@ -1,0 +1,49 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  email         String   @unique
+  password_hash String
+  is_admin      Boolean  @default(false)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  api_keys      ApiKey[]
+  usage_logs    UsageLog[]
+}
+
+model ApiKey {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  key        String   @unique
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  expires_at DateTime?
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  usage_logs UsageLog[]
+}
+
+model UsageLog {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  api_key_id      Int
+  model_name      String
+  timestamp       DateTime @default(now())
+  endpoint        String
+  request_size    Int
+  processing_time Float
+  status_code     Int
+  request_ip      String
+  user_agent      String
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  api_key         ApiKey   @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+} 

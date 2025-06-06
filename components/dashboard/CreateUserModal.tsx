@@ -4,9 +4,8 @@ import { X } from "lucide-react";
 
 interface CreateUserModalProps {
   isOpen: boolean;
-  isLoading: boolean;
   onClose: () => void;
-  onSubmit: (
+  onCreateUser: (
     username: string,
     email: string,
     password: string,
@@ -16,9 +15,8 @@ interface CreateUserModalProps {
 
 export default function CreateUserModal({
   isOpen,
-  isLoading,
   onClose,
-  onSubmit,
+  onCreateUser,
 }: CreateUserModalProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -103,7 +101,7 @@ export default function CreateUserModal({
     validateForm();
 
     if (isFormValid) {
-      onSubmit(username, email, password, isAdmin);
+      onCreateUser(username, email, password, isAdmin);
       // Don't reset the form here - let the parent component control the modal
     }
   };
@@ -231,8 +229,7 @@ export default function CreateUserModal({
             </button>
             <Button
               type="submit"
-              isLoading={isLoading}
-              disabled={!isFormValid || isLoading}
+              disabled={!isFormValid}
             >
               Create User
             </Button>

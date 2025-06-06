@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { detectObjects } from "../services/api";
-import { isLoggedIn } from "../services/auth";
 
 export function useImageDetection() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -8,21 +7,7 @@ export function useImageDetection() {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<boolean>(false);
-
-  // Check if user is authenticated
-  useEffect(() => {
-    if (typeof window !== 'undefined') { // Check if we're in the browser
-      const loggedIn = isLoggedIn();
-      if (!loggedIn) {
-        setAuthError(true);
-        setError("Authentication required. Please log in to use this feature.");
-      } else {
-        setAuthError(false);
-        setError(null);
-      }
-    }
-  }, []);
+  const [progress, setProgress] = useState(0);
 
   // Clean up URLs when component unmounts or when they change
   useEffect(() => {
@@ -37,11 +22,6 @@ export function useImageDetection() {
   }, [preview, resultImage]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // If not authenticated, don't allow image selection
-    if (authError) {
-      return;
-    }
-    
     const file = e.target.files?.[0];
     if (file) {
       // Revoke previous URL if it exists
@@ -74,10 +54,11 @@ export function useImageDetection() {
   };
 
   const handleDetection = async () => {
-    if (!selectedImage || authError) return;
+    if (!selectedImage) return;
 
     setIsLoading(true);
     setError(null);
+    setProgress(0);
 
     // Clean up previous result URL
     if (resultImage && resultImage.startsWith("blob:")) {
@@ -86,20 +67,14 @@ export function useImageDetection() {
     }
 
     try {
-      const blob = await detectObjects(selectedImage);
-      const imageUrl = URL.createObjectURL(blob);
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+      const blob = await detectObjects(formData, setProgress);
+      const imageUrl = URL.createObjectURL(blob as Blob);
       setResultImage(imageUrl);
     } catch (error) {
-      // Check if it's an authentication error
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
-        setAuthError(true);
-        setError("Authentication required. Please log in to use this feature.");
-      } else {
-        setError(errorMessage);
-      }
-      
+      setError(errorMessage);
       console.error("Error processing image:", error);
     } finally {
       setIsLoading(false);
@@ -112,7 +87,7 @@ export function useImageDetection() {
       URL.revokeObjectURL(resultImage);
       setResultImage(null);
     }
-    
+
     // Optionally clear everything
     if (selectedImage) {
       setSelectedImage(null);
@@ -124,6 +99,7 @@ export function useImageDetection() {
     }
 
     setError(null);
+    setProgress(0);
   };
 
   return {
@@ -132,7 +108,7 @@ export function useImageDetection() {
     resultImage,
     isLoading,
     error,
-    authError,
+    progress,
     handleImageChange,
     handleDetection,
     resetDetection,

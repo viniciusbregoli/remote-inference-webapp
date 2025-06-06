@@ -1,30 +1,40 @@
 // API service for YOLO Object Detection API
-import { getAuthHeader } from "./auth";
 
-const API_URL = "http://localhost:5000";
+export async function detectObjects(
+  formData: FormData,
+  onProgress?: (progress: number) => void
+) {
+  return new Promise(async (resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-export async function detectObjects(image: File): Promise<Blob> {
-  const formData = new FormData();
-  formData.append("image", image);
+    xhr.open("POST", "/api/detect", true);
 
-  const headers = { ...getAuthHeader() };
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        const progress = Math.round((event.loaded / event.total) * 100);
+        onProgress(progress);
+      }
+    };
 
-  const response = await fetch(`${API_URL}/detect`, {
-    method: "POST",
-    headers,
-    body: formData,
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const blob = new Blob([xhr.response], { type: "image/jpeg" });
+        resolve(blob);
+      } else {
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          reject(new Error(errorData.detail || `Request failed with status ${xhr.status}`));
+        } catch (e) {
+          reject(new Error(`Request failed with status ${xhr.status}`));
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("Network request failed"));
+    };
+
+    xhr.responseType = "arraybuffer";
+    xhr.send(formData);
   });
-
-  if (!response.ok) {
-    let errorMessage = `Detection failed with status: ${response.status}`;
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.detail || JSON.stringify(errorData);
-    } catch {
-      errorMessage = (await response.text()) || errorMessage;
-    }
-    throw new Error(errorMessage);
-  }
-
-  return await response.blob();
 }

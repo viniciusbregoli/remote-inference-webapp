@@ -1,15 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getAllApiKeys,
-  createApiKey,
-  deactivateApiKey,
-  activateApiKey,
-  deleteApiKey,
-} from "../../../services/apiKeyService";
-import { getCurrentUser } from "../../../services/userService";
-import { ApiKey } from "../../../types";
+import { useSession } from "next-auth/react";
+import { APIKey, User } from "@prisma/client";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";
 import NewKeyDisplay from "../../../components/dashboard/NewKeyDisplay";
@@ -18,129 +11,108 @@ import ConfirmationDialog from "../../../components/ui/ConfirmationDialog";
 import { Key, Plus, Trash2, Power, PowerOff } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 
+type ApiKeyWithUser = APIKey & { user: { username: string } };
+
 export default function ApiKeysPage() {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const { data: session } = useSession();
+  const [apiKeys, setApiKeys] = useState<ApiKeyWithUser[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newKeyData, setNewKeyData] = useState<{
-    key: string;
-    name: string;
-  } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{
-    isOpen: boolean;
-    keyId: number | null;
-  }>({
-    isOpen: false,
-    keyId: null,
-  });
+  const [newKeyData, setNewKeyData] = useState<{ key: string; name: string } | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; keyId: number | null }>({ isOpen: false, keyId: null });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState<number | null>(null);
 
+  const isAdmin = (session?.user as any)?.is_admin;
+
   useEffect(() => {
-    fetchCurrentUser().then(() => {
+    if (isAdmin) {
       fetchApiKeys();
-    });
-  }, []);
+      fetchUsers();
+    } else {
+        setError("You need administrator privileges to access this page.");
+        setIsLoading(false);
+    }
+  }, [isAdmin]);
 
   const fetchApiKeys = async () => {
     setIsLoading(true);
     try {
-      const keys = await getAllApiKeys();
-      setApiKeys(keys);
+      const response = await fetch('/api/apikeys');
+      if (!response.ok) throw new Error('Failed to fetch API keys');
+      const data = await response.json();
+      setApiKeys(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch API keys");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchCurrentUser = async () => {
-    try {
-      const user = await getCurrentUser();
-      setIsAdmin(user.is_admin);
-      return user;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch user information"
-      );
-      setApiKeys([]);
-      setIsLoading(false);
-      return null;
-    }
-  };
+  const fetchUsers = async () => {
+      try {
+          const response = await fetch('/api/users');
+          if (!response.ok) throw new Error('Failed to fetch users');
+          const data = await response.json();
+          setUsers(data);
+      } catch (err) {
+          // Non-critical, modal just won't have users to select
+          console.error(err);
+      }
+  }
 
-  const handleCreateKey = async (
-    name: string,
-    userIdToAssign: number,
-    expirationDate?: string
-  ) => {
-    setIsCreating(true);
+  const handleCreateKey = async (name: string, userId: number, expires_at?: string) => {
     setError(null);
-
     try {
-      const newKey = await createApiKey(
-        userIdToAssign,
-        name,
-        expirationDate ? new Date(expirationDate).toISOString() : undefined
-      );
-
-      setNewKeyData({
-        key: newKey.key,
-        name: newKey.name,
+      const response = await fetch('/api/apikeys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, userId, expires_at }),
       });
-
-      fetchApiKeys();
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to create key');
+      }
+      const newKey = await response.json();
+      setNewKeyData({ key: newKey.key, name: newKey.name });
+      await fetchApiKeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create API key");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      // Always close modal and stop loading state
-      setIsCreating(false);
       setIsCreateModalOpen(false);
     }
   };
-
-  const handleToggleActivation = async (key: ApiKey) => {
-    setIsToggling(key.id);
+  
+  const handleToggle = async (key: APIKey) => {
     try {
-      if (key.is_active) {
-        await deactivateApiKey(key.id);
-      } else {
-        await activateApiKey(key.id);
-      }
-      fetchApiKeys();
+        const response = await fetch(`/api/apikeys/${key.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: !key.is_active }),
+        });
+        if (!response.ok) throw new Error('Update failed');
+        await fetchApiKeys();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Failed to ${key.is_active ? "deactivate" : "activate"} API key`
-      );
-    } finally {
-      setIsToggling(null);
+        setError(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
   const openDeleteConfirmation = (keyId: number) => {
-    setDeleteConfirmation({
-      isOpen: true,
-      keyId,
-    });
+    setDeleteConfirmation({ isOpen: true, keyId });
   };
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmation.keyId) return;
-
-    setIsDeleting(true);
     try {
-      await deleteApiKey(deleteConfirmation.keyId);
-      fetchApiKeys();
-      setDeleteConfirmation({ isOpen: false, keyId: null });
+      await fetch(`/api/apikeys/${deleteConfirmation.keyId}`, { method: 'DELETE' });
+      await fetchApiKeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete API key");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setIsDeleting(false);
+      setDeleteConfirmation({ isOpen: false, keyId: null });
     }
   };
 
@@ -288,7 +260,7 @@ export default function ApiKeysPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {key.user_username || `ID: ${key.user_id}`}
+                      {key.user.username || `ID: ${key.user_id}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                       {maskKey(key.key)}
@@ -313,7 +285,7 @@ export default function ApiKeysPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center min-w-[80px]">
                         <button
-                          onClick={() => handleToggleActivation(key)}
+                          onClick={() => handleToggle(key)}
                           disabled={isToggling === key.id}
                           className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                           data-tooltip-id={`tooltip-toggle-${key.id}`}

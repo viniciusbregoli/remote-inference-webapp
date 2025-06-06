@@ -1,15 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getAllUsers,
-  createUser,
-  toggleUserActive,
-  toggleUserAdmin,
-  deleteUser,
-} from "../../../services/userService";
-import { getCurrentUser } from "../../../services/userService";
-import { User } from "../../../types";
+import { useSession } from "next-auth/react";
+import { User } from "@prisma/client";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";
 import CreateUserModal from "../../../components/dashboard/CreateUserModal";
@@ -24,16 +17,13 @@ import {
   ShieldCheck,
   UserCircle,
 } from "lucide-react";
-import { Tooltip } from "react-tooltip";
 
 export default function UsersPage() {
+  const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     userId: number | null;
@@ -41,156 +31,109 @@ export default function UsersPage() {
     isOpen: false,
     userId: null,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isTogglingActive, setIsTogglingActive] = useState<number | null>(null);
-  const [isTogglingAdmin, setIsTogglingAdmin] = useState<number | null>(null);
+
+  const currentUserId = (session?.user as any)?.id;
+  const isAdminUser = (session?.user as any)?.is_admin;
 
   useEffect(() => {
-    fetchCurrentUser().then((user) => {
-      if (user?.is_admin) {
-        fetchUsers();
-      } else {
-        setIsLoading(false);
-      }
-    });
-  }, []);
+    if (isAdminUser) {
+      fetchUsers();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAdminUser]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const fetchedUsers = await getAllUsers();
-      setUsers(fetchedUsers);
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const data = await response.json();
+      setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch users");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchCurrentUser = async () => {
-    try {
-      const user = await getCurrentUser();
-      setCurrentUserId(user.id);
-      setIsAdminUser(user.is_admin);
-      return user;
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to fetch current user information"
-      );
-      setIsAdminUser(false);
-      setIsLoading(false);
-      return null;
-    }
-  };
-
-  const handleCreateUser = async (
-    username: string,
-    email: string,
-    password: string,
-    isAdminRole: boolean
-  ) => {
-    setIsCreating(true);
+  const handleCreateUser = async (username: string, email: string, password: string, is_admin: boolean) => {
     setError(null);
-
     try {
-      await createUser(username, email, password, isAdminRole);
-      fetchUsers();
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password, is_admin }),
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to create user');
+      }
+      await fetchUsers(); // Refresh users list
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create user");
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      // Always close modal and stop loading state
-      setIsCreating(false);
-      setIsCreateModalOpen(false);
+        setIsCreateModalOpen(false);
     }
   };
 
-  const handleToggleActive = async (user: User) => {
-    if (user.id === currentUserId) return;
-    setIsTogglingActive(user.id);
-    try {
-      await toggleUserActive(user.id, !user.is_active);
-      fetchUsers();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Failed to ${user.is_active ? "deactivate" : "activate"} user`
-      );
-    } finally {
-      setIsTogglingActive(null);
-    }
-  };
+  const handleToggle = async (user: User, field: 'is_active' | 'is_admin') => {
+    if (user.id === parseInt(currentUserId, 10)) return;
+    
+    const originalUsers = [...users];
+    const updatedUsers = users.map(u => u.id === user.id ? { ...u, [field]: !u[field] } : u);
+    setUsers(updatedUsers);
 
-  const handleToggleAdmin = async (user: User) => {
-    if (user.id === currentUserId) return;
-    setIsTogglingAdmin(user.id);
     try {
-      await toggleUserAdmin(user.id, !user.is_admin);
-      fetchUsers();
+        const response = await fetch(`/api/users/${user.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: !user[field] }),
+        });
+        if (!response.ok) {
+            throw new Error('Update failed');
+        }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Failed to ${
-              user.is_admin ? "remove admin privileges from" : "make admin"
-            } user`
-      );
-    } finally {
-      setIsTogglingAdmin(null);
+        setError(err instanceof Error ? err.message : "An error occurred");
+        setUsers(originalUsers); // Revert on failure
     }
   };
 
   const openDeleteConfirmation = (userId: number) => {
-    if (userId === currentUserId) return;
-    setDeleteConfirmation({
-      isOpen: true,
-      userId,
-    });
+    if (userId === parseInt(currentUserId, 10)) return;
+    setDeleteConfirmation({ isOpen: true, userId });
   };
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmation.userId) return;
-    if (deleteConfirmation.userId === currentUserId) {
-      setError("You cannot delete your own account.");
-      setDeleteConfirmation({ isOpen: false, userId: null });
-      return;
-    }
 
-    setIsDeleting(true);
     try {
-      await deleteUser(deleteConfirmation.userId);
-      fetchUsers();
-      setDeleteConfirmation({ isOpen: false, userId: null });
+      const response = await fetch(`/api/users/${deleteConfirmation.userId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Failed to delete user');
+      }
+      await fetchUsers(); // Refresh users list
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user");
+        setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setIsDeleting(false);
+        setDeleteConfirmation({ isOpen: false, userId: null });
     }
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | Date) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
     });
   };
 
   if (!isAdminUser && !isLoading) {
-    return (
-      <div className="p-8">
-        <ErrorMessage
-          title="Access Denied"
-          message="You need administrator privileges to access this page."
-        />
-      </div>
-    );
+    return <ErrorMessage title="Access Denied" message="You need administrator privileges to access this page." />;
   }
 
   if (isLoading && users.length === 0) {
@@ -302,7 +245,7 @@ export default function UsersPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => {
-                  const isSelf = user.id === currentUserId;
+                  const isSelf = user.id === parseInt(currentUserId, 10);
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -363,76 +306,57 @@ export default function UsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis text-sm font-medium">
                         <div className="flex items-center min-w-[120px]">
                           <button
-                            onClick={() => handleToggleActive(user)}
-                            disabled={
-                              isSelf ||
-                              isTogglingActive === user.id ||
-                              isTogglingAdmin === user.id
-                            }
+                            onClick={() => handleToggle(user, 'is_active')}
+                            disabled={isSelf}
                             className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            data-tooltip-id={`tooltip-active-${user.id}`}
+                            data-tooltip-id="users-tooltip"
                             data-tooltip-content={
-                              user.is_active
-                                ? "Deactivate User"
-                                : "Activate User"
+                              user.is_active ? "Deactivate" : "Activate"
                             }
                             data-tooltip-place="top"
                           >
-                            {isTogglingActive === user.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                            ) : user.is_active ? (
+                            {user.is_active ? (
                               <PowerOff size={16} className="text-amber-600" />
                             ) : (
-                              <Power size={16} className="text-green-600" />
+                              <Power size={16} className="text-emerald-600" />
                             )}
                           </button>
-                          <Tooltip id={`tooltip-active-${user.id}`} />
 
                           <button
-                            onClick={() => handleToggleAdmin(user)}
-                            disabled={
-                              isSelf ||
-                              isTogglingAdmin === user.id ||
-                              isTogglingActive === user.id
-                            }
+                            onClick={() => handleToggle(user, 'is_admin')}
+                            disabled={isSelf}
                             className="w-8 h-8 ml-1 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            data-tooltip-id={`tooltip-admin-${user.id}`}
+                            data-tooltip-id="users-tooltip"
                             data-tooltip-content={
                               user.is_admin
-                                ? "Remove Admin Privileges"
-                                : "Make Admin"
+                                ? "Revoke Admin"
+                                : "Grant Admin"
                             }
                             data-tooltip-place="top"
                           >
-                            {isTogglingAdmin === user.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                            ) : user.is_admin ? (
+                            {user.is_admin ? (
                               <ShieldCheck
                                 size={16}
                                 className="text-purple-600"
                               />
                             ) : (
-                              <Shield size={16} className="text-indigo-600" />
+                              <Shield
+                                size={16}
+                                className="text-gray-400"
+                              />
                             )}
                           </button>
-                          <Tooltip id={`tooltip-admin-${user.id}`} />
 
                           <button
                             onClick={() => openDeleteConfirmation(user.id)}
-                            disabled={
-                              isSelf ||
-                              isDeleting ||
-                              isTogglingActive === user.id ||
-                              isTogglingAdmin === user.id
-                            }
+                            disabled={isSelf}
                             className="w-8 h-8 ml-1 flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            data-tooltip-id={`tooltip-delete-${user.id}`}
+                            data-tooltip-id="users-tooltip"
                             data-tooltip-content="Delete User"
                             data-tooltip-place="top"
                           >
                             <Trash2 size={16} />
                           </button>
-                          <Tooltip id={`tooltip-delete-${user.id}`} />
                         </div>
                       </td>
                     </tr>
@@ -446,19 +370,16 @@ export default function UsersPage() {
 
       <CreateUserModal
         isOpen={isCreateModalOpen}
-        isLoading={isCreating}
         onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateUser}
+        onCreateUser={handleCreateUser}
       />
 
       <ConfirmationDialog
         isOpen={deleteConfirmation.isOpen}
-        title="Delete User"
-        message="Are you sure you want to delete this user? This action cannot be undone and all API keys associated with this user will be deleted as well."
-        confirmText="Delete"
-        isLoading={isDeleting}
-        onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteConfirmation({ isOpen: false, userId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
       />
     </div>
   );

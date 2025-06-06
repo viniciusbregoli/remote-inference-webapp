@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { User } from "../../types";
-import { getAllUsers } from "../../services/userService";
+import { User } from "@prisma/client";
 import { ChevronDown, ChevronUp, Search, Loader } from "lucide-react";
 
 interface UserSelectorProps {
@@ -27,12 +26,12 @@ export default function UserSelector({
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const fetchedUsers = await getAllUsers();
-      // Only show active users
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Server error');
+      const fetchedUsers = await response.json();
       const activeUsers = fetchedUsers.filter((user: User) => user.is_active);
       setUsers(activeUsers);
 
-      // If no user is selected and we have users, select the first one
       if (!selectedUserId && activeUsers.length > 0) {
         onSelectUser(activeUsers[0].id);
       }

@@ -2,35 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { Key, Camera, Users } from "lucide-react";
-import { getCurrentUser } from "../../services/userService";
 import Link from "next/link";
 import ErrorMessage from "../../components/ui/ErrorMessage";
+import { useSession } from "next-auth/react";
 
-export default function Dashboard() {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [username, setUsername] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const user = await getCurrentUser();
-        setIsAdmin(user.is_admin);
-        setUsername(user.username);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch user information"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchUserData();
-  }, []);
+  
+  const isAdmin = (session?.user as any)?.is_admin;
+  const username = session?.user?.name || "User";
 
   if (isLoading) {
     return (
@@ -40,7 +22,7 @@ export default function Dashboard() {
     );
   }
 
-  // Admin dashboard (keep the original admin view)
+  // Admin dashboard
   if (isAdmin) {
     return (
       <div className="max-w-7xl mx-auto px-4">
@@ -49,7 +31,7 @@ export default function Dashboard() {
             Admin Dashboard
           </h1>
           <p className="text-lg text-gray-600 mt-1">
-            Welcome to your YOLO Detection API administration panel.
+            Welcome to your administration panel.
           </p>
         </div>
 
@@ -83,7 +65,7 @@ export default function Dashboard() {
                 </h2>
               </div>
               <p className="text-gray-600">
-                Manage API keys and access credentials.
+                Manage API keys and access credentials for all users.
               </p>
             </div>
           </Link>
@@ -100,7 +82,7 @@ export default function Dashboard() {
           Welcome, {username}
         </h1>
         <p className="text-lg text-gray-600 mt-1">
-          YOLO Object Detection API Dashboard
+          API Dashboard
         </p>
       </div>
 
@@ -134,7 +116,7 @@ export default function Dashboard() {
               </h2>
             </div>
             <p className="text-gray-600">
-              Upload images and detect objects using our YOLO model.
+              Upload images and detect objects using the model.
             </p>
           </div>
         </Link>
