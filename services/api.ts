@@ -2,12 +2,15 @@
 
 export async function detectObjects(
   formData: FormData,
+  apiKey: string,
   onProgress?: (progress: number) => void
 ) {
   return new Promise(async (resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
     xhr.open("POST", "/api/detect", true);
+
+    xhr.setRequestHeader("X-API-Key", apiKey);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {

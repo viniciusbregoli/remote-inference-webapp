@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { detectObjects } from "../services/api";
 
-export function useImageDetection() {
+export function useImageDetection(apiKey: string) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function useImageDetection() {
     try {
       const formData = new FormData();
       formData.append("image", selectedImage);
-      const blob = await detectObjects(formData, setProgress);
+      const blob = await detectObjects(formData, apiKey, setProgress);
       const imageUrl = URL.createObjectURL(blob as Blob);
       setResultImage(imageUrl);
     } catch (error) {

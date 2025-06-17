@@ -1,14 +1,17 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import ImageUpload from "../../../components/image-detection/ImageUpload";
 import ResultsDisplay from "../../../components/image-detection/ResultsDisplay";
 import Button from "../../../components/ui/Button";
 import ErrorMessage from "../../../components/ui/ErrorMessage";
-import { useImageDetection } from "../../../hooks/useImageDetection";
-import { Camera } from "lucide-react";
+import { useImageDetection } from "@/hooks/useImageDetection";
+import { Camera, Key } from "lucide-react";
+import Input from "@/components/ui/Input";
 
 export default function DetectionPage() {
+  const [apiKey, setApiKey] = useState("");
+
   const {
     preview,
     resultImage,
@@ -17,7 +20,20 @@ export default function DetectionPage() {
     handleImageChange,
     handleDetection,
     resetDetection,
-  } = useImageDetection();
+  } = useImageDetection(apiKey);
+
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem("apiKey");
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+    localStorage.setItem("apiKey", newApiKey);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -64,6 +80,28 @@ export default function DetectionPage() {
 
           <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
             <div className="flex-grow">
+              {/* API Key Input */}
+              <div className="mb-4">
+                <label
+                  htmlFor="apiKey"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Your API Key
+                </label>
+                <div className="relative">
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={apiKey}
+                    onChange={handleApiKeyChange}
+                    placeholder="Enter your API key"
+                    required
+                    className="pr-10"
+                  />
+                  <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+
               <ImageUpload
                 preview={preview}
                 isLoading={detectionLoading}
@@ -74,7 +112,7 @@ export default function DetectionPage() {
             <div className="mt-6">
               <Button
                 type="submit"
-                disabled={!preview || detectionLoading}
+                disabled={!preview || detectionLoading || !apiKey}
                 isLoading={detectionLoading}
                 fullWidth={true}
               >
